@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Market Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+  --bg:#060c18;
+  --sidebar:#07101f;
+  --card:#0c1a2e;
+  --accent:#00d4ff;
+  --text:#dce8f5;
+  --muted:#7a9ab8;
+}
+body{margin:0;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);}
+
+/* LOGIN */
+#login{height:100vh;display:flex;justify-content:center;align-items:center;}
+.login-box{background:var(--card);padding:30px;border-radius:16px;width:320px;}
+input{width:100%;padding:10px;margin:10px 0;border-radius:8px;border:none;}
+button{padding:10px;width:100%;border:none;border-radius:8px;background:var(--accent);cursor:pointer;}
+
+/* APP */
+#app{display:none;height:100vh;display:flex;}
+.sidebar{width:220px;background:var(--sidebar);padding:20px;}
+.nav-item{padding:10px;border-radius:8px;cursor:pointer;margin-bottom:5px;}
+.nav-item:hover{background:rgba(0,212,255,.1);}
+.active{background:rgba(0,212,255,.2);}
+
+.main{flex:1;display:flex;flex-direction:column;}
+.topbar{display:flex;justify-content:space-between;padding:10px;background:#0c1a2e;}
+.content{padding:20px;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.kpi{background:var(--card);padding:15px;border-radius:10px;}
+
+.card{background:var(--card);padding:20px;border-radius:10px;margin-top:20px;}
+
+.btn{padding:6px 12px;border:none;border-radius:6px;cursor:pointer;}
+.btn-back{background:#162d48;color:#fff;}
+.btn-logout{background:#f43f5e;color:#fff;}
+
+#logoutModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);justify-content:center;align-items:center;}
+.modal-box{background:var(--card);padding:20px;border-radius:10px;}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-box">
+    <h2>Login</h2>
+    <input id="user" placeholder="Username">
+    <input id="pass" type="password" placeholder="Password">
+    <button onclick="loginUser()">Login</button>
+    <p id="err" style="color:red;display:none;">Invalid (admin/admin123)</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <div class="sidebar">
+    <h3>📊 Market</h3>
+    <div class="nav-item active" onclick="navigate('dashboard', this)">Dashboard</div>
+    <div class="nav-item" onclick="navigate('reports', this)">Reports</div>
+  </div>
+
+  <div class="main">
+
+    <div class="topbar">
+      <button class="btn btn-back" onclick="goBack()">⬅ Back</button>
+      <div id="title">Dashboard</div>
+      <button class="btn btn-logout" onclick="showLogout()">Logout</button>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="dashboard">
+        <div class="kpi-row">
+          <div class="kpi">NIFTY<br><b>21,500</b></div>
+          <div class="kpi">SENSEX<br><b>71,200</b></div>
+          <div class="kpi">Dip<br><b>2025–26</b></div>
+          <div class="kpi">Recovery<br><b>2027+</b></div>
+        </div>
+
+        <div class="card">
+          <h3>Market Forecast</h3>
+          <canvas id="chart"></canvas>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div id="reports" style="display:none;">
+        <div class="card">
+          <h3>Reports</h3>
+          <p>SARIMAX Analysis</p>
+          <p>Macroeconomic Study</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div id="logoutModal">
+  <div class="modal-box">
+    <h3>Logout?</h3>
+    <button onclick="logout()">Yes</button>
+    <button onclick="hideLogout()">Cancel</button>
+  </div>
+</div>
+
+<script>
+let historyStack = ["dashboard"];
+let currentIndex = 0;
+
+/* LOGIN FIXED */
+function loginUser(){
+  const u = document.getElementById("user").value;
+  const p = document.getElementById("pass").value;
+
+  if(u === "admin" && p === "admin123"){
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "flex";
+    loadChart();
+  } else {
+    document.getElementById("err").style.display = "block";
+  }
+}
+
+/* NAVIGATION FIXED */
+function navigate(page, el){
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("reports").style.display = "none";
+  document.getElementById(page).style.display = "block";
+
+  document.getElementById("title").innerText = page;
+
+  historyStack = historyStack.slice(0, currentIndex + 1);
+  historyStack.push(page);
+  currentIndex++;
+}
+
+/* BACK FIXED */
+function goBack(){
+  if(currentIndex > 0){
+    currentIndex--;
+    const page = historyStack[currentIndex];
+
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("reports").style.display = "none";
+    document.getElementById(page).style.display = "block";
+  }
+}
+
+/* LOGOUT */
+function showLogout(){
+  document.getElementById("logoutModal").style.display = "flex";
+}
+function hideLogout(){
+  document.getElementById("logoutModal").style.display = "none";
+}
+function logout(){
+  document.getElementById("app").style.display = "none";
+  document.getElementById("login").style.display = "flex";
+  hideLogout();
+}
+
+/* CHART */
+function loadChart(){
+  new Chart(document.getElementById("chart"),{
+    type:"line",
+    data:{
+      labels:["2000","2005","2010","2015","2020","2024","2026","2028"],
+      datasets:[
+        {label:"NIFTY",data:[3000,5000,7000,9000,12000,21000,18000,23000],borderColor:"#00d4ff"},
+        {label:"SENSEX",data:[10000,17000,23000,30000,45000,70000,60000,78000],borderColor:"#f59e0b"}
+      ]
+    }
+  });
+}
+</script>
+
+</body>
+</html>
